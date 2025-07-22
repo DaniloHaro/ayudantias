@@ -79,11 +79,23 @@ class LoginController extends Controller
         phpCAS::setNoCasServerValidation();
         phpCAS::forceAuthentication();
 
+        // $username = phpCAS::getUser();
+        // $datos = $this->obtenerDatosPersona($username);
+        // //dd($datos);
+        // $indiv_id = $datos["indiv_id"];
+        // $rut = strpos($indiv_id, "P") === false ? substr(intval($indiv_id), 0, -1) : $indiv_id;
         $username = phpCAS::getUser();
         $datos = $this->obtenerDatosPersona($username);
-        //dd($datos);
         $indiv_id = $datos["indiv_id"];
-        $rut = strpos($indiv_id, "P") === false ? substr(intval($indiv_id), 0, -1) : $indiv_id;
+
+        if (strpos($indiv_id, 'P') === false) {
+            // Es un RUT: quitar el dígito verificador y eliminar ceros a la izquierda
+            $rut = ltrim(substr($indiv_id, 0, -1), '0');
+        } else {
+            // Es un pasaporte, se mantiene completo
+            $rut = $indiv_id;
+        }
+
         $nombreCompleto = $datos["nombres"] . ' ' . $datos["paterno"] . ' ' . $datos["materno"];
 
         $usuario = Usuario::firstOrCreate(
@@ -98,7 +110,7 @@ class LoginController extends Controller
                 //ingresar correo de udatos
             ]
         );
-
+        //dd($rut);
         if (!$this->asignarPermisoSiCorresponde($usuario, $rut)) {
             return redirect()->route('redirect.cas.logout', ['motivo' => $usuario->wasRecentlyCreated ? 'no_usuario' : 'sin_permiso']);
         }
@@ -114,7 +126,7 @@ class LoginController extends Controller
         $curl = curl_init();
         curl_setopt_array($curl, [
             CURLOPT_URL => 'https://facso.cl/app_facultad/facultad/api/api.php?num=1&pass=' . $username,
-            //CURLOPT_URL => 'https://facso.cl/app_facultad/facultad/api/api.php?num=1&pass=' . 'cahuil.ortiz',
+            //CURLOPT_URL => 'https://facso.cl/app_facultad/facultad/api/api.php?num=1&pass=' . 'pia.lepe.t',
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYHOST => $certificate_location,
             CURLOPT_SSL_VERIFYPEER => $certificate_location
