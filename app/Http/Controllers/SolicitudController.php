@@ -80,6 +80,7 @@ class SolicitudController extends Controller
 
         $suma = 0;
 
+        $llamadas = 0;
         $llamadas = ($cursos['llamadas']);
         
         foreach ($cursos as $curso) {
