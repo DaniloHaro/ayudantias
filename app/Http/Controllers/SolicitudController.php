@@ -105,6 +105,7 @@ class SolicitudController extends Controller
             'llamadas' => $llamadas
         ];
     }
+
     private function obtenerMatriculaAlumno($rut)
     {
         $response = Http::withBasicAuth(
@@ -592,14 +593,14 @@ class SolicitudController extends Controller
         $usuario = Auth::user();
         $rut = $usuario->rut;
         //dd($rut);
-        $datos = $this->obtenerTotalSCTDesdeUcampus($rut);
+        //$datos = $this->obtenerTotalSCTDesdeUcampus($rut);
 
         //dd($datos);
         $llamadas_api = $datos['llamadas'];
-        $sct_datos = $datos['total'];
-        if($rut == '18670144'){
-            $sct_datos = 120;
-        }
+        // $sct_datos = $datos['total'];
+        // if($rut == '18670144'){
+        //     $sct_datos = 120;
+        // }
         
 
         $asignaturas = Asignatura::all();
