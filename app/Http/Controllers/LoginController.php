@@ -126,7 +126,7 @@ class LoginController extends Controller
         $curl = curl_init();
         curl_setopt_array($curl, [
             CURLOPT_URL => 'https://facso.cl/app_facultad/facultad/api/api.php?num=1&pass=' . $username,
-            //CURLOPT_URL => 'https://facso.cl/app_facultad/facultad/api/api.php?num=1&pass=' . 'pia.lepe.t',
+            //CURLOPT_URL => 'https://facso.cl/app_facultad/facultad/api/api.php?num=1&pass=' . 'f.castillo.3',
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYHOST => $certificate_location,
             CURLOPT_SSL_VERIFYPEER => $certificate_location

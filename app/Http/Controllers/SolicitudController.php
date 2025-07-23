@@ -55,6 +55,9 @@ class SolicitudController extends Controller
     {
         $user = '1b83813aa238536d317a70b72a854629';
         $pass = '7c5328036b7eb4bc';
+        // $user = 'e82061941f3bbe9fa8d9558dd4c5dea2';
+        // $pass = '5d2cf21964cbdca5';
+
         $baseUrl = 'https://ucampus.uchile.cl/api/0/facso_mufasa/';
 
         // Llamadas API
@@ -77,7 +80,8 @@ class SolicitudController extends Controller
 
         $suma = 0;
 
-        // Cursos inscritos aprobados
+        $llamadas = ($cursos['llamadas']);
+        
         foreach ($cursos as $curso) {
             if (($curso['estado_final'] ?? '') === 'Aprobado') {
                 $suma += floatval($curso['ud'] ?? 0);
@@ -91,7 +95,8 @@ class SolicitudController extends Controller
 
         return [
             'total' => $suma,
-            'estado' => $persona['estado'] ?? 'Desconocido'
+            'estado' => $persona['estado'] ?? 'Desconocido',
+            'llamadas' => $llamadas
         ];
     }
     private function obtenerMatriculaAlumno($rut)
@@ -157,7 +162,8 @@ class SolicitudController extends Controller
         $solicitudes = HistorialSolicitud::join('solicitud', 'solicitud.id_solicitud', '=', 'historial_solicitud.id_solicitud')
             ->join('asignatura', 'asignatura.id_asigantura', '=', 'solicitud.id_asigantura')
             ->join('usuarios','usuarios.rut','=','solicitud.pers_dig')
-            ->select('asignatura.nombre as nombre_asignatura', 
+            ->select(
+                    'asignatura.nombre as nombre_asignatura', 
                     'solicitud.pers_dig',
                     'solicitud.fecha_dig',
                     'solicitud.archivo_path',
@@ -165,8 +171,16 @@ class SolicitudController extends Controller
                     'solicitud.id_asigantura',
                     'historial_solicitud.etapa',
                     'usuarios.email',
-                    'asignatura.cupos','asignatura.rut',
-                    'asignatura.seccion','asignatura.bloque_1','asignatura.bloque_2','asignatura.bloque_3')
+                    'usuarios.nombres',
+                    'usuarios.paterno',
+                    'usuarios.materno',
+                    'asignatura.cupos',
+                    'asignatura.rut',
+                    'asignatura.seccion',
+                    'asignatura.bloque_1',
+                    'asignatura.bloque_2',
+                    'asignatura.bloque_3'
+                )
             ->whereIn('historial_solicitud.id_historial', $subconsulta)
             ->whereIn('historial_solicitud.estado_solicitud',['Pendiente','Seleccionado/a'])
             ->orderBy('solicitud.id_solicitud', 'desc')
@@ -181,7 +195,8 @@ class SolicitudController extends Controller
                     ->pluck('total_solicitudes', 'id_asigantura');
 
         foreach ($solicitudes as $solicitud) {
-            $solicitud->nombre_estudiante = $this->obtenerNombreCompletoDesdeUcampus($solicitud->pers_dig);
+            //$solicitud->nombre_estudiante = $this->obtenerNombreCompletoDesdeUcampus($solicitud->pers_dig);
+            $solicitud->nombre_estudiante = trim("{$solicitud->nombres} {$solicitud->paterno} {$solicitud->materno}");
             $solicitud->total_solicitudes = $conteo_solicitudes[$solicitud->id_asigantura] ?? 0;
         }
         //dd($solicitudes->toArray());
@@ -208,6 +223,9 @@ class SolicitudController extends Controller
             ->select('asignatura.nombre as nombre_asignatura', 
                     'solicitud.pers_dig',
                     'solicitud.fecha_dig',
+                    'usuarios.nombres',
+                    'usuarios.paterno',
+                    'usuarios.materno',
                     'solicitud.archivo_path',
                     'historial_solicitud.id_solicitud',
                     'solicitud.id_asigantura',
@@ -231,7 +249,8 @@ class SolicitudController extends Controller
 
         //dd($conteo_solicitudes->toSql(), $conteo_solicitudes->getBindings());
         foreach ($solicitudes as $solicitud) {
-            $solicitud->nombre_estudiante = $this->obtenerNombreCompletoDesdeUcampus($solicitud->pers_dig);
+            //$solicitud->nombre_estudiante = $this->obtenerNombreCompletoDesdeUcampus($solicitud->pers_dig);
+            $solicitud->nombre_estudiante = trim("{$solicitud->nombres} {$solicitud->paterno} {$solicitud->materno}");
             $solicitud->total_solicitudes = $conteo_solicitudes[$solicitud->id_asigantura] ?? 0;
         }
         //dd($solicitud->total_solicitudes)->all();
@@ -259,6 +278,9 @@ class SolicitudController extends Controller
             ->select('asignatura.nombre as nombre_asignatura', 
                     'solicitud.pers_dig',
                     'solicitud.fecha_dig',
+                    'usuarios.nombres',
+                    'usuarios.paterno',
+                    'usuarios.materno',
                     'solicitud.archivo_path',
                     'historial_solicitud.id_solicitud',
                     'historial_solicitud.etapa',
@@ -272,7 +294,8 @@ class SolicitudController extends Controller
         
         //dd($solicitudes);
         foreach ($solicitudes as $solicitud) {
-            $solicitud->nombre_estudiante = $this->obtenerNombreCompletoDesdeUcampus($solicitud->pers_dig);
+            //$solicitud->nombre_estudiante = $this->obtenerNombreCompletoDesdeUcampus($solicitud->pers_dig);
+            $solicitud->nombre_estudiante = trim("{$solicitud->nombres} {$solicitud->paterno} {$solicitud->materno}");
         }
         //dd($solicitudes->toArray());
         //return response()->json($solicitudes);
@@ -562,7 +585,11 @@ class SolicitudController extends Controller
         //dd($etapa);
         $usuario = Auth::user();
         $rut = $usuario->rut;
+        //dd($rut);
         $datos = $this->obtenerTotalSCTDesdeUcampus($rut);
+
+        //dd($datos);
+        $llamadas_api = $datos['llamadas'];
         $sct_datos = $datos['total'];
         if($rut == '18670144'){
             $sct_datos = 120;
@@ -580,7 +607,7 @@ class SolicitudController extends Controller
         $tipos_cuenta = TipoCuenta::all();
         $permiso = Permiso::with('carrera')->where('rut', $rut)->where('estado', '1')->first();;
 
-        return view('solicitudes.create', compact('asignaturas', 'carreras', 'datosBanco', 'bancos','tipos_cuenta', 'rut','permiso','etapa','sct_datos'));
+        return view('solicitudes.create', compact('asignaturas', 'carreras', 'datosBanco', 'bancos','tipos_cuenta', 'rut','permiso','etapa','sct_datos','llamadas_api'));
     }
 
     
