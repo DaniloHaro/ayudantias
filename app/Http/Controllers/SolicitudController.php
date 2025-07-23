@@ -80,8 +80,13 @@ class SolicitudController extends Controller
 
         $suma = 0;
 
-        $llamadas = 0;
-        $llamadas = ($cursos['llamadas']);
+        
+        if (isset($cursos['llamadas'])){
+            $llamadas = ($cursos['llamadas']);
+        }else{
+            $llamadas = 0;
+        }
+        
         
         foreach ($cursos as $curso) {
             if (($curso['estado_final'] ?? '') === 'Aprobado') {
