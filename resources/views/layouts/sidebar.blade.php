@@ -11,7 +11,9 @@
                  <a href="{{ route('mis-solicitudes') }}" class="nav-link text-white {{ request()->routeIs('mis-solicitudes') ? 'active bg-primary' : '' }}">
                     <i class="fa-solid fa-list"></i> <span class="sidebar-text">Mis Solicitudes</span>
                 </a>
-                 <a href="{{ route('solicitudes-coordinador') }}" class="nav-link text-white {{ request()->routeIs('solicitudes-coordinador') ? 'active bg-primary' : '' }}">
+            @endif
+            @if(auth()->user()->perfil === 'Admin')
+                <a href="{{ route('solicitudes-coordinador') }}" class="nav-link text-white {{ request()->routeIs('solicitudes-coordinador') ? 'active bg-primary' : '' }}">
                     <i class="fa-solid fa-bookmark"></i> <span class="sidebar-text">Todas las Solicitudes</span>
                 </a>
             @endif
