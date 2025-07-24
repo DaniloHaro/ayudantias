@@ -126,7 +126,7 @@ class LoginController extends Controller
         $curl = curl_init();
         curl_setopt_array($curl, [
             CURLOPT_URL => 'https://facso.cl/app_facultad/facultad/api/api.php?num=1&pass=' . $username,
-            //CURLOPT_URL => 'https://facso.cl/app_facultad/facultad/api/api.php?num=1&pass=' . 'f.castillo.3',
+            //CURLOPT_URL => 'https://facso.cl/app_facultad/facultad/api/api.php?num=1&pass=' . 'esperanza.arce',
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYHOST => $certificate_location,
             CURLOPT_SSL_VERIFYPEER => $certificate_location
@@ -139,38 +139,76 @@ class LoginController extends Controller
         return $persona;
     }
 
-    private function asignarPermisoSiCorresponde($usuario, $rut): bool
-    {
-        $permisosActivos = Permiso::where('rut', $rut)->where('estado', 1)->exists();
-        if ($permisosActivos) return true;
+    // private function asignarPermisoSiCorresponde($usuario, $rut): bool
+        // {
+        //     $permisosActivos = Permiso::where('rut', $rut)->where('estado', 1)->exists();
+        //     if ($permisosActivos) return true;
 
-        $carreras = $this->obtenerCarrerasAlumno($rut);
-        if (!$carreras) return false;
+        //     $carreras = $this->obtenerCarrerasAlumno($rut);
+        //     //dd($carreras);
+        //     if (!$carreras) return false;
 
-        foreach ($carreras as $carrera) {
-            if ($carrera['estado_texto'] === 'Regular' && $carrera['tipo_titulo'] === '2') {
-                $idCarrera = $this->buscarCarrera($carrera['id_carrera']);
-                if (!$idCarrera) continue;
+        //     foreach ($carreras as $carrera) {
+        //         if ($carrera['estado_texto'] === 'Regular' && $carrera['tipo_titulo'] === '2') {
 
-                $yaTienePermiso = Permiso::where('rut', $rut)
-                    ->where('id_carrera', $idCarrera)
-                    ->where('estado', 1)
-                    ->exists();
+        //             dd($carrera['id_carrera']);
+        //             $idCarrera = $this->buscarCarrera($carrera['id_carrera']);
+        //             //dd($idCarrera);
+        //             if (!$idCarrera) continue;
+                
+        //             $yaTienePermiso = Permiso::where('rut', $rut)
+        //                 ->where('id_carrera', $idCarrera)
+        //                 ->where('estado', 1)
+        //                 ->exists();
 
-                if (!$yaTienePermiso) {
-                    Permiso::create([
-                        'id_carrera' => $idCarrera,
-                        'rut' => $rut,
-                        'tipo' => 'Estudiante',
-                        'estado' => 1,
-                    ]);
+        //             dd($yaTienePermiso);
+        //             if (!$yaTienePermiso) {
+        //                 Permiso::create([
+        //                     'id_carrera' => $idCarrera,
+        //                     'rut' => $rut,
+        //                     'tipo' => 'Estudiante',
+        //                     'estado' => 1,
+        //                 ]);
+        //             }
+        //             return true;
+        //         }
+        //     }
+
+        //     return false;
+    // }
+        public function asignarPermisoSiCorresponde($usuario, $rut): bool
+        {
+            $permisosActivos = Permiso::where('rut', $rut)->where('estado', 1)->exists();
+            if ($permisosActivos) return true;
+
+            $carreras = $this->obtenerCarrerasAlumno($rut);
+            if (!$carreras) return false;
+
+            foreach ($carreras as $carrera) {
+                if ($carrera['estado_texto'] === 'Regular' && (int)$carrera['tipo_titulo'] === 2) {
+
+                    $idCarrera = $carrera['id_carrera'];
+
+                    $yaTienePermiso = Permiso::where('rut', $rut)
+                        ->where('id_carrera', $idCarrera)
+                        ->where('estado', 1)
+                        ->exists();
+
+                    if (!$yaTienePermiso) {
+                        Permiso::create([
+                            'rut' => $rut,
+                            'id_carrera' => $idCarrera,
+                            'tipo' => 'Estudiante',
+                            'estado' => 1,
+                        ]);
+                    }
+
+                    return true;
                 }
-                return true;
             }
-        }
 
-        return false;
-    }
+            return false;
+        }
 
     public function redirectCasLogout(Request $request, $motivo = null)
     {
